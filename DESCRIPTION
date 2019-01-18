@@ -1,0 +1,11 @@
+Package: ggboral
+Version: 0.1.0
+Title: ggplots for multivariate analyses in boral
+Authors@R: c(person(c("Martin", "J."), "Westgate", role=c("aut", "cre"),
+  email="martinjwestgate@gmail.com"))
+Description: Plot results from boral analyses (https://cran.r-project.org/package=boral)
+Depends: R (>= 3.5.0)
+Imports: ggplot2
+License: GPL-3
+BugReports: https://github.com/mjwestgate/ggboral/issues
+LazyData: true

@@ -1,2 +1,2 @@
 # ggboral
-ggplots for results from multivariate analyses in boral
+ggplots for multivariate analyses in <a href="https://cran.r-project.org/package=boral">boral</a>. Besides being incomplete, this package also doesn't do anything especially new, and draws heavily on code already provided in boral.
