@@ -1,22 +1,17 @@
-# testing
-# covname <- "weight"
-# x <- model_percent
-# library(ggplot2)
-
 # necessary attributes of ggboral package
   # functions return a ggplot object so the user can add extra args
   # should allow no variables to be specified, returning plots for all variables
   # note also need replacement for lvsplot
   # might be useful to have functions to plot residual correlations as well
 
+# NOTE: this changes behaviour of coefsplot - no longer accepts length(labely)==1
 
-# function to return coefficients for a specified predictor
+# function to return coefficients etc for a (single) specified predictor
 calc_coefs <- function(covname, x, labely = NULL, est = "median", ...){
 
   if (!is.null(labely))
-      if (!(length(labely) == nrow(x$X.coefs.median) || length(labely) ==
-          1))
-          stop("If labely is not NULL, then it must be either of length one or a vector as long as the number of rows in x$X.coefs.median (number of species). Thanks!")
+      if (!(length(labely) == nrow(x$X.coefs.median)))
+          stop("If labely is not NULL, then it must be a vector as long as the number of rows in x$X.coefs.median (number of species). Thanks!")
   if (!(covname %in% colnames(x$X.coefs.mean)))
       stop("covname not found among the covariates in the boral object x")
 
@@ -30,11 +25,11 @@ calc_coefs <- function(covname, x, labely = NULL, est = "median", ...){
     x0 = lci,
     x1 = uci,
     y = rev(seq_len(nrow(x$X.coefs.median))),
-    color = "black",
+    overlaps_zero = FALSE,
     stringsAsFactors = FALSE
   )
   rownames(data) <- NULL
-  data$color[lci < 0 & uci > 0] <- "grey"
+  data$overlaps_zero[lci < 0 & uci > 0] <- TRUE
   if(is.null(labely)) {
     data$labels <- rownames(x$X.coefs.mean)
   }else{
@@ -45,72 +40,68 @@ calc_coefs <- function(covname, x, labely = NULL, est = "median", ...){
 }
 
 
-# function to draw ggplot versions of the caterpillar plots returned by boral::coefsplot
-ggcoefs <- function (covname, x, labely = NULL, est = "median", ...)
-{
+# a user-called function to create a data.frame of predictions for 1+ variables
+# this can then be passed to ggcoefs
+boral_coefs <- function(covname, x, labely = NULL, est = "median", ...){
+
   if(missing(covname)){
     covname <- colnames(x$X.coefs.mean)
+  }else{
+    if(is.null(covname)){
+      covname <- colnames(x$X.coefs.mean)
+    }
   }
 
   if(length(covname) > 1){
-    lapply(covname, calc_coefs)
-    # rbind
+    result_list <- lapply(covname, function(a){
+      calc_coefs(a, x, labely, est)
+    })
+    result <- data.frame(
+      covname = rep(
+        covname,
+        each = nrow(x$X.coefs.mean)
+      ),
+      do.call(rbind, result_list),
+      stringsAsFactors = FALSE
+    )
   }else{
-    calc_coefs
+    result <- calc_coefs(covname, x, labely, est)
+  }
+  return(result)
+}
+
+
+# function to draw ggplot versions of the caterpillar plots returned by boral::coefsplot
+# note that ggplot is returned, so extra ggplot2 functions can be added
+ggcoefs <- function (covname, x, labely = NULL, est = "median", ...)
+{
+
+  if(missing(covname)){
+    covname <- colnames(x$X.coefs.mean)
+  }else{
+    if(is.null(covname)){
+      covname <- colnames(x$X.coefs.mean)
+    }
   }
 
-    # draw plot
-    if(length(unique(data$labels)) == 1){
+  data <- boral_coefs(covname, x, labely, est)
 
-    }else{
-      ggplot(data, aes(x = x, y = y, color = color)) +
-        scale_y_continuous(
-          breaks = data$y,
-          labels = data$labels,
-          name = ""
-        ) +
-        xlab(covname) +
-        geom_vline(xintercept = 0, linetype = "dashed") +
-        geom_errorbarh(aes(xmin = x0, xmax = x1)) +
-        geom_point() +
-        theme_bw()
-    }
+  # draw plot
+  object <- ggplot(data, aes(x = x, y = y, color = overlaps_zero)) +
+    scale_y_continuous(
+      breaks = data$y,
+      labels = data$labels,
+      name = ""
+    ) +
+    xlab(covname) +
+    geom_vline(xintercept = 0, linetype = "dashed") +
+    geom_errorbarh(aes(xmin = x0, xmax = x1)) +
+    geom_point() +
+    theme_bw()
 
-    # original code
-    col.seq <- rep("black", length(x$hpdintervals$X.coefs[, covname,
-        "lower"]))
-    col.seq[x$hpdintervals$X.coefs[, covname, "lower"] < 0 &
-        x$hpdintervals$X.coefs[, covname, "upper"] > 0] <- "grey"
-    At.y <- rev(seq_len(nrow(x$X.coefs.median)))
-    if (est == "median")
-        plot(x = x$X.coefs.median[, covname], y = At.y, yaxt = "n",
-            ylab = "", col = col.seq, xlab = covname, xlim = c(min(x$hpdintervals$X.coefs[,
-                covname, "lower"]), max(x$hpdintervals$X.coefs[,
-                covname, "upper"])), pch = "x", ...)
-    if (est == "mean")
-        plot(x = x$X.coefs.mean[, covname], y = At.y, yaxt = "n",
-            ylab = "", col = col.seq, xlab = covname, xlim = c(min(x$hpdintervals$X.coefs[,
-                covname, "lower"]), max(x$hpdintervals$X.coefs[,
-                covname, "upper"])), pch = "x", ...)
-    segments(x0 = x$hpdintervals$X.coefs[, covname, "lower"],
-        y0 = At.y, x1 = x$hpdintervals$X.coefs[, covname, "upper"],
-        y1 = At.y, col = col.seq, ...)
-    abline(v = 0, lty = 3)
-    if (is.null(labely)) {
-        axis(2, at = At.y, labels = rownames(x$X.coefs.mean),
-            las = 1, ...)
-    }
-    if (!is.null(labely)) {
-        if (length(labely) == nrow(x$X.coefs.mean))
-            axis(2, at = At.y, labels = labely, las = 1, ...)
-        if (length(labely) == 1)
-            mtext(text = labely, side = 2, line = 3, las = 3,
-                ...)
-    }
-    if (exists("ssvs.indcoefs.mean", x)) {
-        message("Posterior probabilities of inclusion for ",
-            covname, ":")
-        print(round(x$ssvs.indcoefs.mean[, covname], 3))
-        message()
-    }
+  if(length(covname) > 1){
+    return(object + facet_wrap( ~ covname, scales = "free_x"))
+  }else{
+    return(object)
+  }
 }
