@@ -45,9 +45,9 @@ spiderfit_nb <- boral(
 )
 
 # generate a data.frame of predictions
-df <- boral_coefs("bare.sand", x = spiderfit_nb)
+df <- boral_coefs(spiderfit_nb, "bare.sand")
 
 # ditto, but for all variables
-df <- boral_coefs(x = spiderfit_nb)
+df <- boral_coefs(spiderfit_nb)
 
 }

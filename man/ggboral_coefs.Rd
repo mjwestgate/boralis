@@ -46,14 +46,14 @@ spiderfit_nb <- boral(
 )
 
 # generate some plots of the coefficients from a single variable
-coefsplot("bare.sand", spiderfit_nb) # traditional method
-ggboral_coefs("bare.sand", spiderfit_nb) # new method
+coefsplot(spiderfit_nb, "bare.sand") # traditional method
+ggboral_coefs(spiderfit_nb, "bare.sand") # new method
 
 # to alter the appearance of the plot, add extra ggplot2 functions
 library(ggplot2)
-ggboral_coefs("bare.sand", spiderfit_nb) + theme_void()
+ggboral_coefs(spiderfit_nb, "bare.sand") + theme_void()
 
 # new feature: plot all variables from the model at once
-ggboral_coefs(x = spiderfit_nb)
+ggboral_coefs(spiderfit_nb)
 
 }
