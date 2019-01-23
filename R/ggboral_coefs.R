@@ -1,13 +1,5 @@
-# necessary attributes of ggboral package
-  # functions return a ggplot object so the user can add extra args
-  # should allow no variables to be specified, returning plots for all variables
-  # note also need replacement for lvsplot
-  # might be useful to have functions to plot residual correlations as well
-
-# NOTE: this changes behaviour of coefsplot - no longer accepts length(labely)==1
-
 # function to return coefficients etc for a (single) specified predictor
-calc_coefs <- function(covname, x, labely = NULL, est = "median", ...){
+calc_coefs <- function(x, covname, labely = NULL, est = "median"){
 
   if (!is.null(labely))
       if (!(length(labely) == nrow(x$X.coefs.median)))
@@ -42,7 +34,7 @@ calc_coefs <- function(covname, x, labely = NULL, est = "median", ...){
 
 # a user-called function to create a data.frame of predictions for 1+ variables
 # this can then be passed to ggcoefs
-boral_coefs <- function(covname, x, labely = NULL, est = "median", ...){
+boral_coefs <- function(x, covname, labely = NULL, est = "median"){
 
   if(missing(covname)){
     covname <- colnames(x$X.coefs.mean)
@@ -73,7 +65,7 @@ boral_coefs <- function(covname, x, labely = NULL, est = "median", ...){
 
 # function to draw ggplot versions of the caterpillar plots returned by boral::coefsplot
 # note that ggplot is returned, so extra ggplot2 functions can be added
-ggcoefs <- function (covname, x, labely = NULL, est = "median", ...)
+ggboral_coefs <- function (x, covname, labely = NULL, est = "median")
 {
 
   if(missing(covname)){
