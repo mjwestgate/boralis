@@ -1,4 +1,4 @@
-export(boral_coefs, ggboral_coefs)
+export(boral_coefs, boral_coefsplot)
 importFrom(ggplot2,
 ggplot, aes, facet_wrap, scale_y_continuous, xlab,
 geom_vline, geom_errorbarh, geom_point, theme_bw

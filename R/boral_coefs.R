@@ -1,5 +1,10 @@
 # function to return coefficients etc for a (single) specified predictor
-calc_coefs <- function(x, covname, labely = NULL, est = "median"){
+calc_coefs <- function(
+  x,
+  covname,
+  # labely = NULL,
+  est = "median"
+){
 
   if (!is.null(labely))
       if (!(length(labely) == nrow(x$X.coefs.median)))
@@ -22,11 +27,11 @@ calc_coefs <- function(x, covname, labely = NULL, est = "median"){
   )
   rownames(data) <- NULL
   data$overlaps_zero[lci < 0 & uci > 0] <- TRUE
-  if(is.null(labely)) {
+  # if(is.null(labely)) {
     data$labels <- rownames(x$X.coefs.mean)
-  }else{
-    data$labels <- labely
-  }
+  # }else{
+  #   data$labels <- labely
+  # }
 
   return(data)
 }
@@ -34,7 +39,12 @@ calc_coefs <- function(x, covname, labely = NULL, est = "median"){
 
 # a user-called function to create a data.frame of predictions for 1+ variables
 # this can then be passed to ggcoefs
-boral_coefs <- function(x, covname, labely = NULL, est = "median"){
+boral_coefs <- function(
+  x,
+  covname,
+  # labely = NULL,
+  est = "median"
+){
 
   if(missing(covname)){
     covname <- colnames(x$X.coefs.mean)
@@ -65,8 +75,16 @@ boral_coefs <- function(x, covname, labely = NULL, est = "median"){
 
 # function to draw ggplot versions of the caterpillar plots returned by boral::coefsplot
 # note that ggplot is returned, so extra ggplot2 functions can be added
-ggboral_coefs <- function (x, covname, labely = NULL, est = "median")
-{
+boral_coefsplot <- function (
+  x,
+  covname,
+  # labely = NULL, # add in again later
+  est = "median"
+){
+
+  if(missing(x)){
+    stop("x is missing, with no default")
+  }
 
   if(missing(covname)){
     covname <- colnames(x$X.coefs.mean)
@@ -76,7 +94,15 @@ ggboral_coefs <- function (x, covname, labely = NULL, est = "median")
     }
   }
 
-  data <- boral_coefs(covname, x, labely, est)
+  if(any(c("boral", "data.frame") %in% class(x))){
+    if(class(x) == "data.frame"){
+      data <- x
+    }else{
+      data <- boral_coefs(x, covname, est)
+    }
+  }else{
+    stop("boral_coefsplot only accepts objects of class 'boral' or 'data.frame'.")
+  }
 
   # draw plot
   object <- ggplot(data, aes(x = x, y = y, color = overlaps_zero)) +
