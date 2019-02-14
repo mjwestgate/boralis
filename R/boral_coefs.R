@@ -56,7 +56,7 @@ boral_coefs <- function(
 
   if(length(covname) > 1){
     result_list <- lapply(covname, function(a){
-      calc_coefs(a, x, labely, est)
+      calc_coefs(a, x, est)
     })
     result <- data.frame(
       covname = rep(
@@ -67,7 +67,7 @@ boral_coefs <- function(
       stringsAsFactors = FALSE
     )
   }else{
-    result <- calc_coefs(covname, x, labely, est)
+    result <- calc_coefs(covname, x, est)
   }
   return(result)
 }
