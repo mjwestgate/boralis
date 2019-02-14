@@ -6,12 +6,10 @@ calc_coefs <- function(
   est = "median"
 ){
 
-  if (!is.null(labely))
-      if (!(length(labely) == nrow(x$X.coefs.median)))
-          stop("If labely is not NULL, then it must be a vector as long as the number of rows in x$X.coefs.median (number of species). Thanks!")
-  if (!(covname %in% colnames(x$X.coefs.mean)))
-      stop("covname not found among the covariates in the boral object x")
-
+  if(!(covname %in% colnames(x$X.coefs.mean))){
+    stop("covname not found among the covariates in the boral object x")
+  }
+  
   # new code
   lci <- x$hpdintervals$X.coefs[, covname, "lower"]
   uci <- x$hpdintervals$X.coefs[, covname, "upper"]
