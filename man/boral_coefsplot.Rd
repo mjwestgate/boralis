@@ -3,7 +3,7 @@
 \title{Caterpillar plots of regression coefficients from a boral model using ggplot2}
 \description{Constructs horizontal line plot (point estimate and HPD intervals), otherwise known as "caterpillar plots", for the column-specific regression coefficients corresponding to a covariate in X fitted in the boral model.}
 \usage{
-boral_coefsplot(x, covname, labely, est)
+boral_coefsplot(x, covname, est)
 }
 \arguments{
   \item{x}{either a boral model, or a data.frame with same column names as returned by \code{boral_coefs}.}
