@@ -2,34 +2,29 @@
 calc_coefs <- function(
   x,
   covname,
-  # labely = NULL,
   est = "median"
 ){
 
   if(!(covname %in% colnames(x$X.coefs.mean))){
     stop("covname not found among the covariates in the boral object x")
   }
-  
-  # new code
+
   lci <- x$hpdintervals$X.coefs[, covname, "lower"]
   uci <- x$hpdintervals$X.coefs[, covname, "upper"]
 
   data <- data.frame(
+    covname = covname,
     labels = NA,
     x = x[[paste0("X.coefs.", est)]][, covname],
     x0 = lci,
     x1 = uci,
-    y = rev(seq_len(nrow(x$X.coefs.median))),
+    y = seq_len(nrow(x$X.coefs.median)),
     overlaps_zero = FALSE,
     stringsAsFactors = FALSE
   )
   rownames(data) <- NULL
   data$overlaps_zero[lci < 0 & uci > 0] <- TRUE
-  # if(is.null(labely)) {
-    data$labels <- rownames(x$X.coefs.mean)
-  # }else{
-  #   data$labels <- labely
-  # }
+  data$labels <- rownames(x$X.coefs.mean)
 
   return(data)
 }
@@ -40,7 +35,6 @@ calc_coefs <- function(
 boral_coefs <- function(
   x,
   covname,
-  # labely = NULL,
   est = "median"
 ){
 
@@ -54,19 +48,20 @@ boral_coefs <- function(
 
   if(length(covname) > 1){
     result_list <- lapply(covname, function(a){
-      calc_coefs(a, x, est)
+      calc_coefs(x, a, est)
     })
     result <- data.frame(
-      covname = rep(
-        covname,
-        each = nrow(x$X.coefs.mean)
-      ),
       do.call(rbind, result_list),
       stringsAsFactors = FALSE
     )
   }else{
-    result <- calc_coefs(covname, x, est)
+    result <- calc_coefs(x, covname, est)
   }
+  result$labels <- factor(
+    result$y,
+    levels = unique(result$y),
+    labels = unique(result$labels)
+  )
   return(result)
 }
 
@@ -84,18 +79,25 @@ boral_coefsplot <- function (
     stop("x is missing, with no default")
   }
 
-  if(missing(covname)){
-    covname <- colnames(x$X.coefs.mean)
-  }else{
-    if(is.null(covname)){
-      covname <- colnames(x$X.coefs.mean)
-    }
-  }
-
   if(any(c("boral", "data.frame") %in% class(x))){
     if(class(x) == "data.frame"){
-      data <- x
+      if(missing(covname)){
+        data <- x
+        covname <- unique(data$covname)
+      }else{
+        if(!(covname %in% x$covname)){
+          stop("covname not found in x$covname")
+        }
+        data <- x[which(x$covname == covname), ]
+      }
     }else{
+      if(missing(covname)){
+        covname <- colnames(x$X.coefs.mean)
+      }else{
+        if(is.null(covname)){
+          covname <- colnames(x$X.coefs.mean)
+        }
+      }
       data <- boral_coefs(x, covname, est)
     }
   }else{
@@ -103,21 +105,24 @@ boral_coefsplot <- function (
   }
 
   # draw plot
-  object <- ggplot(data, aes(x = x, y = y, color = overlaps_zero)) +
-    scale_y_continuous(
-      breaks = data$y,
-      labels = data$labels,
-      name = ""
-    ) +
-    xlab(covname) +
+  object <- ggplot(data,
+    aes(x = x, y = labels, color = overlaps_zero)
+  ) +
+    scale_y_discrete() +
     geom_vline(xintercept = 0, linetype = "dashed") +
     geom_errorbarh(aes(xmin = x0, xmax = x1)) +
     geom_point() +
-    theme_bw()
+    scale_colour_manual(values = c("black", "grey70")) +
+    theme_bw() +
+    guides(color = FALSE) +
+    ylab("Species")
 
   if(length(covname) > 1){
-    return(object + facet_wrap( ~ covname, scales = "free_x"))
+    return(object +
+      facet_wrap( ~ covname, scales = "free_x") +
+      xlab("Coefficient")
+    )
   }else{
-    return(object)
+    return(object + xlab(covname))
   }
 }
