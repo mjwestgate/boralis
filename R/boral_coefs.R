@@ -1,30 +1,48 @@
-# function to return coefficients etc for a (single) specified predictor
-calc_coefs <- function(
-  x,
+# low-level function to extract estimates for a single variable
+extract_boral_estimates <- function(
+  x, # model
   covname,
+  type = "coefs",
   est = "median"
 ){
 
-  if(!(covname %in% colnames(x$X.coefs.mean))){
+  # work out what to extract
+  if(missing(type)){type = "coefs"}
+  if(!(any(c("coefs", "traits") == type))){
+    stop(paste0(type, " is not a valid input to argument 'type'; please specify 'coefs' or 'traits'"))
+  }
+  extract_what <- switch(type,
+    "coefs" = "X.coefs",
+    "traits" = "traits.coefs"
+  )
+  if((type == "traits") & !any(names(x$hpdintervals) == extract_what)){
+    stop("type 'traits' has been specified, but no traits are present in x")
+  }
+  est_central <- x[[paste(extract_what, est, sep = ".")]]
+  est_range <- x$hpdintervals[[extract_what]]
+
+  # check if present
+  if(!(covname %in% colnames(est_central))){
     stop("covname not found among the covariates in the boral object x")
   }
 
-  lci <- x$hpdintervals$X.coefs[, covname, "lower"]
-  uci <- x$hpdintervals$X.coefs[, covname, "upper"]
-
+  # extract into data.frame
+  lci <- est_range[, covname, "lower"]
+  uci <- est_range[, covname, "upper"]
   data <- data.frame(
     covname = covname,
+    statistic = est,
     labels = NA,
-    x = x[[paste0("X.coefs.", est)]][, covname],
+    x = est_central[, covname],
     x0 = lci,
     x1 = uci,
-    y = seq_len(nrow(x$X.coefs.median)),
+    y = seq_len(nrow(est_central)),
     overlaps_zero = FALSE,
     stringsAsFactors = FALSE
   )
   rownames(data) <- NULL
   data$overlaps_zero[lci < 0 & uci > 0] <- TRUE
-  data$labels <- rownames(x$X.coefs.mean)
+  data$labels <- rownames(est_central)
 
   return(data)
 }
@@ -35,27 +53,41 @@ calc_coefs <- function(
 boral_coefs <- function(
   x,
   covname,
+  type = "coefs",
   est = "median"
 ){
 
+  if(missing(type)){type = "coefs"}
+  if(!(any(c("coefs", "traits") == type))){
+    stop(paste0(type, " is not a valid input to argument 'type'; please specify 'coefs' or 'traits'"))
+  }
+  extract_what <- switch(type,
+    "coefs" = "X.coefs",
+    "traits" = "traits.coefs"
+  )
+  if((type == "traits") & !any(names(x$hpdintervals) == extract_what)){
+    stop("type 'traits' has been specified, but no traits are present in x")
+  }
+  variable <- x[[paste(extract_what, est, sep = ".")]]
+
   if(missing(covname)){
-    covname <- colnames(x$X.coefs.mean)
+    covname <- colnames(variable)
   }else{
     if(is.null(covname)){
-      covname <- colnames(x$X.coefs.mean)
+      covname <- colnames(variable)
     }
   }
 
   if(length(covname) > 1){
     result_list <- lapply(covname, function(a){
-      calc_coefs(x, a, est)
+      extract_boral_estimates(x, a, type, est)
     })
     result <- data.frame(
       do.call(rbind, result_list),
       stringsAsFactors = FALSE
     )
   }else{
-    result <- calc_coefs(x, covname, est)
+    result <- extract_boral_estimates(x, covname, type, est)
   }
   result$labels <- factor(
     result$y,
@@ -71,6 +103,7 @@ boral_coefs <- function(
 boral_coefsplot <- function (
   x,
   covname,
+  type = "coefs",
   # labely = NULL, # add in again later
   est = "median"
 ){
@@ -78,6 +111,19 @@ boral_coefsplot <- function (
   if(missing(x)){
     stop("x is missing, with no default")
   }
+  if(missing(type)){type = "coefs"}
+  if(!(any(c("coefs", "traits") == type))){
+    stop(paste0(type, " is not a valid input to argument 'type'; please specify 'coefs' or 'traits'"))
+  }
+  extract_what <- switch(type,
+    "coefs" = "X.coefs",
+    "traits" = "traits.coefs"
+  )
+  if((type == "traits") & !any(names(x$hpdintervals) == extract_what)){
+    stop("type 'traits' has been specified, but no traits are present in x")
+  }
+  variable <- x[[paste(extract_what, est, sep = ".")]]
+
 
   if(any(c("boral", "data.frame") %in% class(x))){
     if(class(x) == "data.frame"){
@@ -85,20 +131,20 @@ boral_coefsplot <- function (
         data <- x
         covname <- unique(data$covname)
       }else{
-        if(!(covname %in% x$covname)){
+        if(!(covname %in%  x$covname)){
           stop("covname not found in x$covname")
         }
         data <- x[which(x$covname == covname), ]
       }
     }else{
       if(missing(covname)){
-        covname <- colnames(x$X.coefs.mean)
+        covname <- colnames(variable)
       }else{
         if(is.null(covname)){
-          covname <- colnames(x$X.coefs.mean)
+          covname <- colnames(variable)
         }
       }
-      data <- boral_coefs(x, covname, est)
+      data <- boral_coefs(x, covname, type, est)
     }
   }else{
     stop("boral_coefsplot only accepts objects of class 'boral' or 'data.frame'.")

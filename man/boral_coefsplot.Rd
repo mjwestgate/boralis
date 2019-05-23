@@ -8,6 +8,7 @@ boral_coefsplot(x, covname, est)
 \arguments{
   \item{x}{either a boral model, or a data.frame with same column names as returned by \code{boral_coefs}.}
   \item{covname}{A covariate for which coefficients should be extracted. If missing or NULL, then values are extracted for all covariates in the model.}
+  \item{type}{What estimates should be plotted; either 'traits' or 'coefs'.}
   \item{est}{A choice of either the posterior median (est = "median") or posterior mean (est = "mean"), which are then used as the point estimates in the lines. Default is posterior median.}
 }
 \details{
